@@ -1,0 +1,34 @@
+# SafeVaultWebApp - Secure Web Application
+
+## 🔒 Overview
+SafeVaultWebApp is a secure web application designed to manage sensitive data with built-in protection against SQL Injection and XSS (Cross-Site Scripting) attacks.
+
+## 📁 Project Structure
+```
+SafeVaultWebApp/
+├── SafeVaultWebApp.Web/
+│   ├── Controllers/
+|   │   ├── AdminController.cs
+|   │   ├── UserAccountController.cs
+|   │   └── UserRoleController.cs
+│   ├── Models/
+|   │   ├── ApplicationDbContext.cs
+|   │   ├── LoginViewModel.cs
+|   │   └── RegisterViewModel.cs
+│   ├── Views/
+|   │   ├── Admin/
+|   |   │   └── Dashboard.cs
+|   │   ├── Shared/
+|   |   │   ├── _Layout.cshtml
+|   |   │   └── _ValidationScriptsPartial.cshtml
+|   │   ├── UserAccount/
+|   |   │   ├── Login.cshtml
+|   |   │   └── Register.cshtml
+|   │   └── _ViewImport.cshtml
+│   ├── wwwroot/
+|   │   ├── css/
+|   │   └── js/
+│   └── SafeVaultWebApp.Web.csproj
+└── SafeVaultWebApp.sln
+```
+

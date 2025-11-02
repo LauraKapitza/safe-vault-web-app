@@ -1,0 +1,92 @@
+@using Microsoft.AspNetCore.Identity
+@using System.Security.Cryptography
+@inject SignInManager<IdentityUser> SignInManager
+@inject UserManager<IdentityUser> UserManager
+@inject Microsoft.AspNetCore.Hosting.IWebHostEnvironment Env
+
+@{
+    // Generate a nonce per request for CSP
+    string nonce = Convert.ToBase64String(System.Security.Cryptography.RandomNumberGenerator.GetBytes(16));
+    Context.Items["CSPNonce"] = nonce;
+    
+    // CSP header
+    string csp = "default-src 'self'; " +
+                 $"script-src 'self' 'nonce-{nonce}' https://cdn.jsdelivr.net; " + 
+                 "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; " +
+                 "img-src 'self' data:; " +
+                 "font-src 'self' https://cdn.jsdelivr.net; " +
+                 "object-src 'none'; " +
+                 "frame-ancestors 'none';";
+                 
+    if (Env.IsDevelopment())
+    {
+        csp += " connect-src 'self' ws://localhost:5000 ws://localhost:50384;";
+    }
+    
+    Context.Response.Headers["Content-Security-Policy"] = csp;
+}
+
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>@ViewData["Title"] - SafeVault</title>
+
+        <!-- Bootstrap CSS -->
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" />
+    </head>
+    <body>
+        <!-- Navbar -->
+        <nav class="navbar navbar-expand-lg navbar-light bg-light mb-4">
+            <div class="container">
+                <a class="navbar-brand" asp-controller="Home" asp-action="Index">SafeVault</a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+
+                <div class="collapse navbar-collapse" id="navbarNav">
+                    <ul class="navbar-nav ms-auto">
+                        @if (SignInManager.IsSignedIn(User))
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link" asp-controller="Home" asp-action="Index">Home</a>
+                            </li>
+                            <li class="nav-item">
+                                <form method="post" asp-controller="UserAccount" asp-action="Logout" class="d-inline">
+                                    @Html.AntiForgeryToken()
+                                    <button type="submit" class="btn btn-link nav-link">Logout</button>
+                                </form>
+                            </li>
+                        }
+                        else
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link" asp-controller="UserAccount" asp-action="Login">Login</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" asp-controller="UserAccount" asp-action="Register">Register</a>
+                            </li>
+                        }
+                    </ul>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Main content -->
+        <div class="container">
+            @RenderBody()
+        </div>
+        
+        <!-- Bootstrap script -->
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" nonce="@nonce"></script>
+
+        <!-- Hot reload / browser refresh (only needed for development) -->
+        @if (Env.IsDevelopment())
+        {
+            <script src="/_framework/aspnetcore-browser-refresh.js"></script>
+        }
+        
+        @RenderSection("Scripts", required: false)
+    </body>
+</html>
