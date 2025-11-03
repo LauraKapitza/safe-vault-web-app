@@ -32,3 +32,19 @@ SafeVaultWebApp/
 └── SafeVaultWebApp.sln
 ```
 
+## Execute migrations
+
+To create migration files, execute the following command:
+```
+dotnet tool run dotnet-ef migrations add <FileName>
+```
+
+To un-do the  created migration, execute this command:
+```
+dotnet tool run dotnet-ef migrations remove
+```
+
+To update the database, execute the following command:
+```
+dotnet tool run dotnet-ef database update
+```

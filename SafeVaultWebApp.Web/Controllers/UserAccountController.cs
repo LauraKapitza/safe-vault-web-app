@@ -33,10 +33,8 @@ public class UserAccountController : Controller
     public async Task<IActionResult> Register(RegisterViewModel model)
     {
         _logger.LogInformation("POST Register hit");
-        _logger.LogInformation("ModelState.IsValid: {IsValid}", ModelState.IsValid);
         if (!ModelState.IsValid)
         {
-            _logger.LogInformation("Register: Model state invalid.");
             return View(model);
         }
         var user = new IdentityUser { UserName = model.Email, Email = model.Email };
