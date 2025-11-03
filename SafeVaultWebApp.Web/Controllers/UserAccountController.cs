@@ -2,18 +2,22 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
 using SafeVaultWebApp.Web.Models;
+using Ganss.Xss;
+
 
 public class UserAccountController : Controller
 {
     private readonly SignInManager<IdentityUser> _signInManager;
     private readonly UserManager<IdentityUser> _userManager;
     private readonly ILogger<UserAccountController> _logger;
+    private readonly HtmlSanitizer _sanitizer;
 
-    public UserAccountController(UserManager<IdentityUser> userManager, SignInManager<IdentityUser> signInManager, ILogger<UserAccountController> logger)
+    public UserAccountController(UserManager<IdentityUser> userManager, SignInManager<IdentityUser> signInManager, ILogger<UserAccountController> logger, HtmlSanitizer sanitizer)
     {
         _userManager = userManager;
         _signInManager = signInManager;
         _logger = logger;
+        _sanitizer = sanitizer;
     }
 
     [HttpGet]
@@ -32,7 +36,14 @@ public class UserAccountController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Register(RegisterViewModel model)
     {
-        _logger.LogInformation("POST Register hit");
+        if (model == null)
+        {
+            _logger.LogError("Register model was null.");
+            return BadRequest("Invalid registration data.");
+        }
+        // Sanitize user input
+        model.Email = _sanitizer.Sanitize(model.Email ?? string.Empty);
+
         if (!ModelState.IsValid)
         {
             return View(model);
@@ -44,11 +55,6 @@ public class UserAccountController : Controller
         if (result.Succeeded)
         {
             _logger.LogInformation("User created a new account with email {Email}.", model.Email);
-
-            // Optionally sign the user in:
-            // await _signInManager.SignInAsync(user, isPersistent: false);
-
-            // Use explicit controller name to be sure we redirect to the right place
             return RedirectToAction(nameof(Login), "UserAccount");
         }
 
@@ -65,6 +71,9 @@ public class UserAccountController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Login(LoginViewModel model)
     {
+        // Sanitize user input
+        model.Email = _sanitizer.Sanitize(model.Email ?? string.Empty);
+
         if (!ModelState.IsValid)
         {
             return View(model);

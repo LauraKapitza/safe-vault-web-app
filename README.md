@@ -8,33 +8,37 @@ SafeVaultWebApp is a secure web application designed to manage sensitive data wi
 SafeVaultWebApp/
 ├── SafeVaultWebApp.Web/
 │   ├── .config/
-|   │   └── dotnet-tools.json
+│   │   └── dotnet-tools.json
 │   ├── Controllers/
-|   │   ├── AdminController.cs
-|   │   ├── HomeController.cs
-|   │   ├── UserAccountController.cs
-|   │   └── UserRoleController.cs
+│   │   ├── AdminController.cs
+│   │   ├── HomeController.cs
+│   │   ├── UserAccountController.cs
+│   │   └── UserRoleController.cs
 │   ├── Migrations/
 │   ├── Models/
-|   │   ├── ApplicationDbContext.cs
-|   │   ├── LoginViewModel.cs
-|   │   └── RegisterViewModel.cs
+│   │   ├── ApplicationDbContext.cs
+│   │   ├── LoginViewModel.cs
+│   │   └── RegisterViewModel.cs
 │   ├── Views/
-|   │   ├── Admin/
-|   |   │   └── Dashboard.cshtml
-|   │   ├── Home/
-|   |   │   └── Index.cshtml
-|   │   ├── Shared/
-|   |   │   ├── _Layout.cshtml
-|   |   │   └── _ValidationScriptsPartial.cshtml
-|   │   ├── UserAccount/
-|   |   │   ├── Login.cshtml
-|   |   │   └── Register.cshtml
-|   │   └── _ViewImport.cshtml
+│   │   ├── Admin/
+│   │   │   └── Dashboard.cshtml
+│   │   ├── Home/
+│   │   │   └── Index.cshtml
+│   │   ├── Shared/
+│   │   │   ├── _Layout.cshtml
+│   │   │   └── _ValidationScriptsPartial.cshtml
+│   │   ├── UserAccount/
+│   │   │   ├── Login.cshtml
+│   │   │   └── Register.cshtml
+│   │   └── _ViewImport.cshtml
 │   ├── wwwroot/
-|   │   ├── css/
-|   │   └── js/
+│   │   ├── css/
+│   │   └── js/
 │   └── SafeVaultWebApp.Web.csproj
+├── SafeVaultWebApp.Tests/
+│   ├── Controllers/
+│   │   └── UserAccountControllerTests.cs
+│   └── SafeVaultWebApp.Tests.csproj
 └── SafeVaultWebApp.sln
 ```
 
