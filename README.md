@@ -7,17 +7,23 @@ SafeVaultWebApp is a secure web application designed to manage sensitive data wi
 ```
 SafeVaultWebApp/
 ├── SafeVaultWebApp.Web/
+│   ├── .config/
+|   │   └── dotnet-tools.json
 │   ├── Controllers/
 |   │   ├── AdminController.cs
+|   │   ├── HomeController.cs
 |   │   ├── UserAccountController.cs
 |   │   └── UserRoleController.cs
+│   ├── Migrations/
 │   ├── Models/
 |   │   ├── ApplicationDbContext.cs
 |   │   ├── LoginViewModel.cs
 |   │   └── RegisterViewModel.cs
 │   ├── Views/
 |   │   ├── Admin/
-|   |   │   └── Dashboard.cs
+|   |   │   └── Dashboard.cshtml
+|   │   ├── Home/
+|   |   │   └── Index.cshtml
 |   │   ├── Shared/
 |   |   │   ├── _Layout.cshtml
 |   |   │   └── _ValidationScriptsPartial.cshtml
@@ -32,7 +38,7 @@ SafeVaultWebApp/
 └── SafeVaultWebApp.sln
 ```
 
-## Execute migrations
+## DB Migrations
 
 To create migration files, execute the following command:
 ```
