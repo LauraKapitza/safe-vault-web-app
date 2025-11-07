@@ -129,15 +129,44 @@ namespace SafeVaultWebApp.Tests.Controllers
 
             _userManager.Setup(x => x.FindByEmailAsync(model.Email))
                 .ReturnsAsync(user);
-
             _signInManager.Setup(x => x.PasswordSignInAsync(user.UserName, model.Password, model.RememberMe, false))
                 .ReturnsAsync(IdentitySignInResult.Success);
+            _userManager.Setup(x => x.GetRolesAsync(user)).ReturnsAsync(new List<string> { "User" });
 
             var result = await _controller.Login(model);
 
             var redirect = Assert.IsType<RedirectToActionResult>(result);
             Assert.Equal("Index", redirect.ActionName);
             Assert.Equal("Home", redirect.ControllerName);
+        }
+
+        [Fact]
+        public async Task Login_WithAdminRole_ShouldRedirectToDashboard()
+        {
+            var model = new LoginViewModel
+            {
+                Email = "admin@example.com",
+                Password = "AdminPass123!",
+                RememberMe = true
+            };
+
+            var user = new IdentityUser
+            {
+                UserName = model.Email,
+                Email = model.Email,
+                PasswordHash = "$2a$10$validbcryptpasswordhash"
+            };
+
+            _userManager.Setup(x => x.FindByEmailAsync(model.Email)).ReturnsAsync(user);
+            _signInManager.Setup(x => x.PasswordSignInAsync(user.UserName, model.Password, model.RememberMe, false))
+                .ReturnsAsync(IdentitySignInResult.Success);
+            _userManager.Setup(x => x.GetRolesAsync(user)).ReturnsAsync(new List<string> { "Admin" });
+
+            var result = await _controller.Login(model);
+
+            var redirect = Assert.IsType<RedirectToActionResult>(result);
+            Assert.Equal("Dashboard", redirect.ActionName);
+            Assert.Equal("Admin", redirect.ControllerName);
         }
 
         [Fact]
@@ -178,5 +207,90 @@ namespace SafeVaultWebApp.Tests.Controllers
             Assert.Equal("Index", redirect.ActionName);
             Assert.Equal("Home", redirect.ControllerName);
         }
+
+        [Fact]
+        public async Task Login_ShouldAssignUserRoleIfNoneExists()
+        {
+            var model = new LoginViewModel
+            {
+                Email = "newuser@example.com",
+                Password = "Password123!",
+                RememberMe = false
+            };
+
+            var user = new IdentityUser
+            {
+                UserName = model.Email,
+                Email = model.Email,
+                PasswordHash = "$2a$10$validbcryptpasswordhash"
+            };
+
+            _userManager.Setup(x => x.FindByEmailAsync(model.Email)).ReturnsAsync(user);
+            _signInManager.Setup(x => x.PasswordSignInAsync(user.UserName, model.Password, model.RememberMe, false))
+                .ReturnsAsync(IdentitySignInResult.Success);
+            _userManager.Setup(x => x.GetRolesAsync(user)).ReturnsAsync(new List<string>());
+            _userManager.Setup(x => x.AddToRoleAsync(user, "User")).ReturnsAsync(IdentityResult.Success);
+
+            var result = await _controller.Login(model);
+
+            _userManager.Verify(x => x.AddToRoleAsync(user, "User"), Times.Once);
+
+            var redirect = Assert.IsType<RedirectToActionResult>(result);
+            Assert.Equal("Index", redirect.ActionName);
+            Assert.Equal("Home", redirect.ControllerName);
+        }
+
+        [Fact]
+        public async Task Login_ShouldRehashPasswordIfNotBcrypt()
+        {
+            var model = new LoginViewModel
+            {
+                Email = "rehash@example.com",
+                Password = "Password123!",
+                RememberMe = false
+            };
+
+            var user = new IdentityUser
+            {
+                UserName = model.Email,
+                Email = model.Email,
+                PasswordHash = "legacyhash123" // not bcrypt
+            };
+
+            _userManager.Setup(x => x.FindByEmailAsync(model.Email)).ReturnsAsync(user);
+            _signInManager.Setup(x => x.PasswordSignInAsync(user.UserName, model.Password, model.RememberMe, false))
+                .ReturnsAsync(IdentitySignInResult.Success);
+            _userManager.Setup(x => x.GetRolesAsync(user)).ReturnsAsync(new List<string> { "User" });
+            _userManager.Setup(x => x.RemovePasswordAsync(user)).ReturnsAsync(IdentityResult.Success);
+            _userManager.Setup(x => x.AddPasswordAsync(user, model.Password)).ReturnsAsync(IdentityResult.Success);
+
+            var result = await _controller.Login(model);
+
+            _userManager.Verify(x => x.RemovePasswordAsync(user), Times.Once);
+            _userManager.Verify(x => x.AddPasswordAsync(user, model.Password), Times.Once);
+
+            var redirect = Assert.IsType<RedirectToActionResult>(result);
+            Assert.Equal("Index", redirect.ActionName);
+        }
+
+        [Fact]
+        public async Task Login_WithUnknownEmail_ShouldReturnViewWithError()
+        {
+            var model = new LoginViewModel
+            {
+                Email = "unknown@example.com",
+                Password = "Password123!",
+                RememberMe = false
+            };
+
+            _userManager.Setup(x => x.FindByEmailAsync(model.Email)).ReturnsAsync((IdentityUser)null);
+
+            var result = await _controller.Login(model);
+
+            var viewResult = Assert.IsType<ViewResult>(result);
+            Assert.False(viewResult.ViewData.ModelState.IsValid);
+            Assert.Contains("Invalid login attempt.", viewResult.ViewData.ModelState[string.Empty].Errors[0].ErrorMessage);
+        }
+
     }
 }

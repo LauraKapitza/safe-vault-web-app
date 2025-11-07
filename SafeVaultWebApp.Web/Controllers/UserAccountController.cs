@@ -109,8 +109,29 @@ public class UserAccountController : Controller
                 _logger.LogInformation("Password rehashed to bcrypt for user {Email}.", model.Email);
             }
 
+            // Assign "User" role if user has no roles
+            var roles = await _userManager.GetRolesAsync(user);
+            if (roles == null || roles.Count == 0)
+            {
+                await _userManager.AddToRoleAsync(user, "User");
+                _logger.LogInformation("Assigned 'User' role to {Email}.", model.Email);
+            }
+
             _logger.LogInformation("User {Email} logged in.", model.Email);
-            return RedirectToAction("Index", "Home");
+            
+            // Redirect based on role
+            if (roles.Contains("Admin"))
+            {
+                return RedirectToAction("Dashboard", "Admin");
+            }
+            else if (roles.Contains("User"))
+            {
+                return RedirectToAction("Index", "Home");
+            }
+            else
+            {
+                return RedirectToAction("Index", "Home"); // fallback
+            }
         }
 
         ModelState.AddModelError(string.Empty, "Invalid login attempt.");
