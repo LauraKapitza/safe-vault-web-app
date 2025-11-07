@@ -16,6 +16,7 @@ namespace SafeVaultWebApp.Tests.Controllers
         private readonly UserAccountController _controller;
         private readonly Mock<UserManager<IdentityUser>> _userManager;
         private readonly Mock<SignInManager<IdentityUser>> _signInManager;
+        private readonly Mock<IPasswordHasher<IdentityUser>> _passwordHasher;
 
         public UserAccountControllerTests()
         {
@@ -35,8 +36,15 @@ namespace SafeVaultWebApp.Tests.Controllers
 
             var logger = new Mock<ILogger<UserAccountController>>();
             var sanitizer = new HtmlSanitizer();
+            _passwordHasher = new Mock<IPasswordHasher<IdentityUser>>();
 
-            _controller = new UserAccountController(_userManager.Object, _signInManager.Object, logger.Object, sanitizer);
+            _controller = new UserAccountController(
+                _userManager.Object,
+                _signInManager.Object,
+                logger.Object,
+                sanitizer,
+                _passwordHasher.Object
+            );
         }
 
         [Fact]
@@ -112,7 +120,17 @@ namespace SafeVaultWebApp.Tests.Controllers
                 RememberMe = false
             };
 
-            _signInManager.Setup(x => x.PasswordSignInAsync(model.Email, model.Password, model.RememberMe, false))
+            var user = new IdentityUser
+            {
+                UserName = "user@example.com",
+                Email = "user@example.com",
+                PasswordHash = "$2a$10$validbcryptpasswordhash"
+            };
+
+            _userManager.Setup(x => x.FindByEmailAsync(model.Email))
+                .ReturnsAsync(user);
+
+            _signInManager.Setup(x => x.PasswordSignInAsync(user.UserName, model.Password, model.RememberMe, false))
                 .ReturnsAsync(IdentitySignInResult.Success);
 
             var result = await _controller.Login(model);
@@ -132,7 +150,16 @@ namespace SafeVaultWebApp.Tests.Controllers
                 RememberMe = false
             };
 
-            _signInManager.Setup(x => x.PasswordSignInAsync(model.Email, model.Password, model.RememberMe, false))
+            var user = new IdentityUser
+            {
+                UserName = "user@example.com",
+                Email = "user@example.com"
+            };
+
+            _userManager.Setup(x => x.FindByEmailAsync(model.Email))
+                .ReturnsAsync(user);
+
+            _signInManager.Setup(x => x.PasswordSignInAsync(user.UserName, model.Password, model.RememberMe, false))
                 .ReturnsAsync(IdentitySignInResult.Failed);
 
             var result = await _controller.Login(model);

@@ -43,6 +43,9 @@ builder.Services.ConfigureApplicationCookie(options =>
     options.LogoutPath = "/UserAccount/Logout";
 });
 
+// Register custom bcrypt password hasher
+builder.Services.AddScoped<IPasswordHasher<IdentityUser>, HybridPasswordHasher<IdentityUser>>();
+
 // Add Anti-Forgery protection explicitly for AJAX if needed
 builder.Services.AddAntiforgery(options =>
 {

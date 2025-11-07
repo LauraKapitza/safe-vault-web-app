@@ -11,13 +11,21 @@ public class UserAccountController : Controller
     private readonly UserManager<IdentityUser> _userManager;
     private readonly ILogger<UserAccountController> _logger;
     private readonly HtmlSanitizer _sanitizer;
+    private readonly IPasswordHasher<IdentityUser> _passwordHasher;
 
-    public UserAccountController(UserManager<IdentityUser> userManager, SignInManager<IdentityUser> signInManager, ILogger<UserAccountController> logger, HtmlSanitizer sanitizer)
+    public UserAccountController(
+        UserManager<IdentityUser> userManager,
+        SignInManager<IdentityUser> signInManager,
+        ILogger<UserAccountController> logger,
+        HtmlSanitizer sanitizer,
+        IPasswordHasher<IdentityUser> passwordHasher
+    )
     {
         _userManager = userManager;
         _signInManager = signInManager;
         _logger = logger;
         _sanitizer = sanitizer;
+        _passwordHasher = passwordHasher;
     }
 
     [HttpGet]
@@ -79,11 +87,28 @@ public class UserAccountController : Controller
             return View(model);
         }
 
+        var user = await _userManager.FindByEmailAsync(model.Email);
+        if (user == null)
+        {
+            ModelState.AddModelError(string.Empty, "Invalid login attempt.");
+            return View(model);
+        }
+
         var result = await _signInManager.PasswordSignInAsync(
-            model.Email, model.Password, model.RememberMe, lockoutOnFailure: false);
+            user.UserName, model.Password, model.RememberMe, lockoutOnFailure: false);
 
         if (result.Succeeded)
         {
+            var currentHash = user.PasswordHash;
+            //check whether user's password hasn't been yet hashed by bcrypt.
+            if (currentHash != null && !currentHash.StartsWith("$2")) // not bcrypt
+            {
+                // Rehash password with bcrypt
+                await _userManager.RemovePasswordAsync(user);
+                await _userManager.AddPasswordAsync(user, model.Password);
+                _logger.LogInformation("Password rehashed to bcrypt for user {Email}.", model.Email);
+            }
+
             _logger.LogInformation("User {Email} logged in.", model.Email);
             return RedirectToAction("Index", "Home");
         }
